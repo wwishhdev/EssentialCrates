@@ -1,0 +1,125 @@
+settings:
+  effects:
+    enabled: true
+    rare-threshold: 10.0
+    sounds:
+      enabled: true
+      volume: 1.0
+      pitch: 1.0
+      rare-sounds:
+        - "ENDERDRAGON_GROWL:0.5:1.0"
+        - "LEVEL_UP:1.0:2.0"
+      normal-sounds:
+        - "LEVEL_UP:1.0:1.0"
+        - "ORB_PICKUP:1.0:1.0"
+    particles:
+      enabled: true
+      amount: 20
+      types:
+        open:
+          - "SPIRAL:WITCH_MAGIC:1.5:2.0"
+          - "HELIX:SPELL_WITCH:1.0:1.5"
+        rare:
+          - "CIRCLE:FLAME:1.5:2"
+          - "BURST:SPELL:2.0:1"
+        normal:
+          - "CIRCLE:HAPPY_VILLAGER:1.5:2"
+    fireworks:
+      enabled: true
+      power: 1
+      rare:
+        type: "BALL_LARGE"
+        colors:
+          - "AQUA"
+          - "PURPLE"
+        fade:
+          - "WHITE"
+        trail: true
+        flicker: true
+  holograms:
+    enabled: true
+    height: 2.5
+    update-interval: 300
+    style:
+      title:
+        text: "&b&l%crate%"
+        offset: 0.0
+      rewards:
+        enabled: true
+        header: "&7Recompensas disponibles:"
+        format: "&f- &e%reward% &7(%chance%%)"
+        max-shown: 3
+        rare-format: "&f- &6&l%reward% &7(%chance%%)" # Para recompensas raras
+        rare-threshold: 10.0 # Porcentaje bajo el cual se considera rara
+        offset: 0.3
+      footer:
+        enabled: true
+        lines:
+          - ""
+          - "&eClick derecho con llave"
+          - "&7Shift + Click para preview"
+        offset: 0.3
+      animation:
+        enabled: true
+        type: "WAVE" # WAVE, BOUNCE, ROTATE
+        speed: 1.0
+        amplitude: 0.1
+      visibility:
+        follow-player: true # El holograma rota para mirar al jugador
+  cache:
+    enabled: true
+    cleanup-interval: 300 # En segundos (5 minutos)
+    expiry-time: 1800 # En segundos (30 minutos)
+  debug:
+    enabled: false
+    log-to-file: true
+    log-performance: true
+    detailed-errors: true
+  storage:
+    type: YAML # YAML, MySQL
+    mysql:
+      host: localhost
+      port: 3306
+      database: essentialcrates
+      username: root
+      password: ''
+
+messages:
+  prefix: "&8[&bEssentialCrates&8] "
+  cooldown: "&cDebes esperar %time% segundos antes de abrir otra crate."
+  no-permission: "&cNo tienes permiso para realizar esta acción."
+  received-key: "&aHas recibido &e%amount% &allave(s) para %crate%"
+  crate-exists: "&cYa existe una crate con ese nombre!"
+  crate-created: "&aLa crate ha sido creada exitosamente!"
+  crate-deleted: "&aLa crate ha sido eliminada exitosamente!"
+  config-reloaded: "&aConfiguración recargada exitosamente."
+  invalid-crate: "&cEsa crate no existe."
+  invalid-amount: "&cLa cantidad debe ser un número positivo."
+  player-not-found: "&cJugador no encontrado."
+  no-key: "&cNecesitas una llave válida para abrir esta crate!"
+  reward-received: "&aHas recibido &e%reward% &ade &b%crate%&a!"
+  preview-title: "&8Preview de %crate%"
+
+crates:
+  example:
+    display-name: "&bCrate Ejemplo"
+    key-item: "TRIPWIRE_HOOK"
+    key-name: "&bLlave de Ejemplo"
+    key-lore:
+      - "&7Click derecho en la crate"
+      - "&7para obtener recompensas!"
+    rewards:
+      - chance: 50
+        commands:
+          - "give %player% diamond 64"
+        display-item: "DIAMOND"
+        display-name: "&b64 Diamantes"
+        lore:
+          - "&7Probabilidad: &e50%"
+      - chance: 30
+        commands:
+          - "give %player% golden_apple 16"
+        display-item: "GOLDEN_APPLE"
+        display-name: "&616 Manzanas de Oro"
+        lore:
+          - "&7Probabilidad: &e30%"

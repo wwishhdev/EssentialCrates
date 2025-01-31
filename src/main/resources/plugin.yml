@@ -1,0 +1,29 @@
+name: EssentialCrates
+version: '1.0.0'
+main: com.wish.essentialcrates.EssentialCrates
+author: wwishh
+description: Un sistema de crates simple y eficiente para servidores HCF/KitMap
+softdepend: [DecentHolograms]
+commands:
+  crate:
+    description: Comando principal de EssentialCrates
+    aliases: [crates, ec]
+permissions:
+  essentialcrates.admin:
+    description: Acceso a todos los comandos
+    default: op
+  essentialcrates.give:
+    description: Dar llaves
+    default: op
+  essentialcrates.create:
+    description: Crear crates
+    default: op
+  essentialcrates.delete:
+    description: Eliminar crates
+    default: op
+  essentialcrates.reload:
+    description: Recargar configuración
+    default: op
+  essentialcrates.debug:
+    description: Permite usar el modo debug
+    default: op
