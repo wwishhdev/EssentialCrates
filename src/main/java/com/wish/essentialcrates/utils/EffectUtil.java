@@ -2,7 +2,6 @@ package com.wish.essentialcrates.utils;
 
 import com.wish.essentialcrates.models.Crate;
 import org.bukkit.*;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -14,6 +13,16 @@ import java.util.List;
 public class EffectUtil {
     private static final EssentialCrates plugin = EssentialCrates.getInstance();
 
+    // Método auxiliar para convertir String a Sound
+    private static Sound getSound(String soundName) {
+        try {
+            return Sound.valueOf(soundName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Sonido inválido: " + soundName + ". Usando sonido por defecto.");
+            return Sound.NOTE_PLING;
+        }
+    }
+
     public static void playCrateOpenEffect(Location location, Crate crate) {
         Crate.EffectsConfig effects = crate.getEffectsConfig();
 
@@ -22,7 +31,8 @@ public class EffectUtil {
             for (String soundConfig : effects.getSounds().getOpenSounds()) {
                 String[] parts = soundConfig.split(":");
                 if (parts.length >= 3) {
-                    location.getWorld().playSound(location, parts[0],
+                    Sound sound = getSound(parts[0]);
+                    location.getWorld().playSound(location, sound,
                             Float.parseFloat(parts[1]),
                             Float.parseFloat(parts[2]));
                 }
@@ -63,7 +73,8 @@ public class EffectUtil {
             for (String soundConfig : sounds) {
                 String[] parts = soundConfig.split(":");
                 if (parts.length >= 3) {
-                    player.playSound(location, parts[0],
+                    Sound sound = getSound(parts[0]);
+                    player.playSound(location, sound,
                             Float.parseFloat(parts[1]),
                             Float.parseFloat(parts[2]));
                 }
