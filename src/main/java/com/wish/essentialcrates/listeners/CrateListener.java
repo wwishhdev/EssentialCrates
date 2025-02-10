@@ -8,6 +8,7 @@ import com.wish.essentialcrates.utils.ConfigUtil;
 import com.wish.essentialcrates.utils.DebugUtil;
 import com.wish.essentialcrates.utils.EffectUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -22,6 +23,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -201,6 +204,88 @@ public class CrateListener implements Listener {
         return item.getType() == keyItem.getType() &&
                 item.getItemMeta().getDisplayName().equals(keyItem.getItemMeta().getDisplayName()) &&
                 item.getItemMeta().getLore().equals(keyItem.getItemMeta().getLore());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onCrateBreak(PlayerInteractEvent event) {
+        if (event.getAction() != Action.LEFT_CLICK_BLOCK ||
+                event.getClickedBlock() == null ||
+                event.getClickedBlock().getType() != Material.CHEST) {
+            return;
+        }
+
+        Block block = event.getClickedBlock();
+        Player player = event.getPlayer();
+        Location location = block.getLocation();
+
+        // Verificar si es una crate
+        Optional<Crate> optionalCrate = plugin.getCrateManager().getCrateAtLocation(location);
+        if (!optionalCrate.isPresent()) {
+            return;
+        }
+
+        event.setCancelled(true);
+
+        // Si no tiene permiso, cancelar
+        if (!plugin.getPermissionManager().hasPermission(player, "essentialcrates.admin")) {
+            player.sendMessage(ConfigUtil.getMessage("no-permission"));
+            return;
+        }
+
+        // Si no está en shift, mostrar mensaje de ayuda
+        if (!player.isSneaking()) {
+            player.sendMessage(ConfigUtil.color("&e⚠ &cPara remover esta crate, usa SHIFT + Click Izquierdo"));
+            return;
+        }
+
+        // Remover la crate de esta ubicación
+        Crate crate = optionalCrate.get();
+
+        // Remover el holograma
+        plugin.getHologramManager().removeHologram(location);
+
+        // Remover la ubicación del almacenamiento
+        if (plugin.getConfig().getString("settings.storage.type", "YAML").equalsIgnoreCase("MYSQL")) {
+            removeCrateLocationMySQL(location);
+        } else {
+            removeCrateLocationYAML(location);
+        }
+
+        // Remover del caché y del mapa de ubicaciones
+        plugin.getCacheManager().invalidateLocation(location);
+        plugin.getCrateManager().getCrateLocations().remove(location);
+
+        // Convertir el cofre en un cofre normal
+        block.setType(Material.AIR);
+        block.setType(Material.CHEST);
+
+        player.sendMessage(ConfigUtil.color("&aHas removido la crate &e" + crate.getDisplayName() + " &ade esta ubicación."));
+        DebugUtil.debug("Crate removida en " + location + " por " + player.getName());
+    }
+
+    private void removeCrateLocationMySQL(Location location) {
+        try (Connection conn = plugin.getDataManager().getHikari().getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "DELETE FROM crate_locations WHERE world = ? AND x = ? AND y = ? AND z = ?")) {
+            ps.setString(1, location.getWorld().getName());
+            ps.setInt(2, location.getBlockX());
+            ps.setInt(3, location.getBlockY());
+            ps.setInt(4, location.getBlockZ());
+            ps.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().severe("Error al eliminar ubicación de MySQL!");
+            e.printStackTrace();
+        }
+    }
+
+    private void removeCrateLocationYAML(Location location) {
+        String key = String.format("%s,%d,%d,%d",
+                location.getWorld().getName(),
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ());
+        plugin.getDataManager().getDataConfig().set("locations." + key, null);
+        plugin.getDataManager().saveData();
     }
 
     private void giveReward(Player player, Crate crate) {

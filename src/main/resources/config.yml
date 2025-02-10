@@ -92,6 +92,7 @@ messages:
   crate-exists: "&cYa existe una crate con ese nombre!"
   crate-created: "&aLa crate ha sido creada exitosamente!"
   crate-deleted: "&aLa crate ha sido eliminada exitosamente!"
+  crate-removed: "&aHas removido la crate &e%crate% &ade esta ubicación."
   config-reloaded: "&aConfiguración recargada exitosamente."
   invalid-crate: "&cEsa crate no existe."
   invalid-amount: "&cLa cantidad debe ser un número positivo."
