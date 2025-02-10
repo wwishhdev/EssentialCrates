@@ -3,6 +3,7 @@ package com.wish.essentialcrates;
 import com.wish.essentialcrates.commands.CrateCommand;
 import com.wish.essentialcrates.listeners.CrateListener;
 import com.wish.essentialcrates.managers.*;
+import com.wish.essentialcrates.utils.DebugUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,6 +29,12 @@ public class EssentialCrates extends JavaPlugin {
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
+
+        // Inicializar el modo debug según la configuración
+        if (getConfig().getBoolean("settings.debug.enabled", false)) {
+            DebugUtil.setGlobalDebug(true);
+            getLogger().info("Modo debug activado globalmente desde la configuración.");
+        }
 
         // Inicializar managers
         this.dataManager = new DataManager(this);

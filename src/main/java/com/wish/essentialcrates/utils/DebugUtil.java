@@ -15,6 +15,13 @@ public class DebugUtil {
     private static final Set<UUID> debugMode = new HashSet<>();
     private static boolean globalDebug = false;
 
+    public static void setGlobalDebug(boolean enabled) {
+        globalDebug = enabled;
+        if (enabled) {
+            plugin.getLogger().info("Debug global activado");
+        }
+    }
+
     public static void toggleDebug(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -22,13 +29,21 @@ public class DebugUtil {
             if (debugMode.contains(uuid)) {
                 debugMode.remove(uuid);
                 sender.sendMessage(ConfigUtil.color("&cModo debug desactivado."));
+                plugin.getLogger().info("Debug desactivado para " + player.getName());
             } else {
                 debugMode.add(uuid);
                 sender.sendMessage(ConfigUtil.color("&aModo debug activado."));
+                plugin.getLogger().info("Debug activado para " + player.getName());
             }
         } else {
             globalDebug = !globalDebug;
+            String status = globalDebug ? "activado" : "desactivado";
             sender.sendMessage(ConfigUtil.color(globalDebug ? "&aModo debug global activado." : "&cModo debug global desactivado."));
+            plugin.getLogger().info("Debug global " + status);
+
+            // Guardar el estado en la configuración
+            plugin.getConfig().set("settings.debug.enabled", globalDebug);
+            plugin.saveConfig();
         }
     }
 

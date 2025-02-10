@@ -274,6 +274,9 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ConfigUtil.color("&e⚠ &cAlgunos cambios (como el tipo de base de datos) requieren un reinicio completo del servidor."));
 
         try {
+            // Guardar estado actual del debug
+            boolean wasDebugEnabled = plugin.getConfig().getBoolean("settings.debug.enabled", false);
+
             // 1. Limpiar recursos actuales
             plugin.getHologramManager().removeAllHolograms();
             plugin.getCacheManager().invalidateAll();
@@ -295,6 +298,14 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
             // 5. Verificar y notificar el tipo de almacenamiento actual
             String storageType = plugin.getConfig().getString("settings.storage.type", "YAML");
             sender.sendMessage(ConfigUtil.color("&aAlmacenamiento actual: &f" + storageType));
+
+            // Restaurar estado del debug después del reload
+            if (wasDebugEnabled) {
+                DebugUtil.setGlobalDebug(true);
+                sender.sendMessage(ConfigUtil.color("&aDebug restaurado al estado: Activado"));
+            }
+
+            sender.sendMessage(ConfigUtil.getMessage("config-reloaded"));
 
         } catch (Exception e) {
             sender.sendMessage(ConfigUtil.color("&c¡Error al recargar! Verifica la consola para más detalles."));
