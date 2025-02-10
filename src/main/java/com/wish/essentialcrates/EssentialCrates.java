@@ -11,7 +11,6 @@ public class EssentialCrates extends JavaPlugin {
 
     @Getter
     private static EssentialCrates instance;
-
     @Getter @Setter
     private DataManager dataManager;
     @Getter @Setter

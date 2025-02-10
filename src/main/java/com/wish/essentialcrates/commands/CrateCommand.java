@@ -264,14 +264,39 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        plugin.reloadConfig();
-        // Recargar managers
-        plugin.getDataManager().close();
-        plugin.setDataManager(new DataManager(plugin));
-        plugin.setCrateManager(new CrateManager(plugin, plugin.getDataManager()));
+        // Mensaje de advertencia
+        sender.sendMessage(ConfigUtil.color("&e⚠ &cAlgunos cambios (como el tipo de base de datos) requieren un reinicio completo del servidor."));
 
-        sender.sendMessage(ConfigUtil.getMessage("config-reloaded"));
+        try {
+            // 1. Limpiar recursos actuales
+            plugin.getHologramManager().removeAllHolograms();
+            plugin.getCacheManager().invalidateAll();
+            plugin.getCooldownManager().clearAllCooldowns();
+            plugin.getDataManager().close();
+
+            // 2. Recargar configuración
+            plugin.reloadConfig();
+
+            // 3. Reinicializar managers en orden correcto
+            plugin.setDataManager(new DataManager(plugin));
+            plugin.setCrateManager(new CrateManager(plugin, plugin.getDataManager()));
+
+            // 4. Recargar hologramas
+            plugin.getHologramManager().reloadAllHolograms();
+
+            sender.sendMessage(ConfigUtil.getMessage("config-reloaded"));
+
+            // 5. Verificar y notificar el tipo de almacenamiento actual
+            String storageType = plugin.getConfig().getString("settings.storage.type", "YAML");
+            sender.sendMessage(ConfigUtil.color("&aAlmacenamiento actual: &f" + storageType));
+
+        } catch (Exception e) {
+            sender.sendMessage(ConfigUtil.color("&c¡Error al recargar! Verifica la consola para más detalles."));
+            plugin.getLogger().severe("Error durante el reload: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {

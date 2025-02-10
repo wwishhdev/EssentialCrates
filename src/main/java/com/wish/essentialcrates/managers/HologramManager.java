@@ -190,6 +190,14 @@ public class HologramManager {
         ROTATE
     }
 
+    public void reloadAllHolograms() {
+        removeAllHolograms();
+        plugin.getCrateManager().getCrateLocations().forEach((location, crateId) -> {
+            plugin.getCrateManager().getCrate(crateId).ifPresent(crate ->
+                    createHologram(location, crate));
+        });
+    }
+
     private class HologramAnimation {
         private final Hologram hologram;
         private final AnimationType type;
