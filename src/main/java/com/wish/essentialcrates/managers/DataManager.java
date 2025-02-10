@@ -43,6 +43,11 @@ public class DataManager {
         String username = config.getString("settings.storage.mysql.username", "root");
         String password = config.getString("settings.storage.mysql.password", "");
 
+        plugin.getLogger().info("§7Conectando a MySQL...");
+        plugin.getLogger().info("§7  ├ Host: " + host);
+        plugin.getLogger().info("§7  ├ Puerto: " + port);
+        plugin.getLogger().info("§7  └ Database: " + database);
+
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database);
         hikariConfig.setUsername(username);
@@ -55,7 +60,9 @@ public class DataManager {
             DebugUtil.debug("Conexión MySQL establecida - Host: " + host + ", DB: " + database);
             DebugUtil.performance("Configuración MySQL", startTime);
         } catch (Exception e) {
-            DebugUtil.error("Error al conectar con MySQL", e);
+            plugin.getLogger().severe("§c✘ Error al conectar con MySQL!");
+            plugin.getLogger().severe("§c  Causa: " + e.getMessage());
+            plugin.getLogger().warning("§e⚠ Cambiando a almacenamiento YAML...");
             setupYAML();
         }
     }
