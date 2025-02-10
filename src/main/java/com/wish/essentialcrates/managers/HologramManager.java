@@ -45,33 +45,25 @@ public class HologramManager {
         if (!enabled) return;
         long startTime = System.nanoTime();
 
-        ConfigurationSection config = plugin.getConfig().getConfigurationSection("settings.holograms.style");
-        if (config == null) return;
-
+        Crate.HologramConfig config = crate.getHologramConfig();
         List<String> lines = new ArrayList<>();
         double currentOffset = 0.0;
 
         // Título
-        String titleFormat = config.getString("title.text", "&b&l%crate%");
-        lines.add(titleFormat.replace("%crate%", crate.getDisplayName()));
-        currentOffset += config.getDouble("title.offset", 0.0);
+        lines.add(ConfigUtil.color(config.getTitleFormat().replace("%crate%", crate.getDisplayName())));
+        currentOffset += config.getTitleOffset();
 
         // Recompensas
-        if (config.getBoolean("rewards.enabled", true)) {
-            lines.add(ConfigUtil.color(config.getString("rewards.header", "&7Recompensas disponibles:")));
-            currentOffset += config.getDouble("rewards.offset", 0.3);
-
-            int maxRewards = config.getInt("rewards.max-shown", 3);
-            double rareThreshold = config.getDouble("rewards.rare-threshold", 10.0);
-            String normalFormat = config.getString("rewards.format", "&f- &e%reward% &7(%chance%%)");
-            String rareFormat = config.getString("rewards.rare-format", "&f- &6&l%reward% &7(%chance%%)");
+        if (config.isRewardsEnabled()) {
+            lines.add(ConfigUtil.color(config.getRewardsHeader()));
+            currentOffset += config.getRewardsOffset();
 
             crate.getRewards().stream()
                     .sorted((r1, r2) -> Double.compare(r2.getChance(), r1.getChance()))
-                    .limit(maxRewards)
+                    .limit(config.getMaxShown())
                     .forEach(reward -> {
-                        boolean isRare = reward.getChance() <= rareThreshold;
-                        String format = isRare ? rareFormat : normalFormat;
+                        boolean isRare = reward.getChance() <= config.getRareThreshold();
+                        String format = isRare ? config.getRareFormat() : config.getRewardsFormat();
                         lines.add(ConfigUtil.color(format
                                 .replace("%reward%", reward.getDisplayItem().getItemMeta().getDisplayName())
                                 .replace("%chance%", String.format("%.1f", reward.getChance()))));
@@ -79,9 +71,9 @@ public class HologramManager {
         }
 
         // Pie de página
-        if (config.getBoolean("footer.enabled", true)) {
-            currentOffset += config.getDouble("footer.offset", 0.3);
-            for (String line : config.getStringList("footer.lines")) {
+        if (config.isFooterEnabled()) {
+            currentOffset += config.getFooterOffset();
+            for (String line : config.getFooterLines()) {
                 lines.add(ConfigUtil.color(line));
             }
         }
@@ -91,31 +83,8 @@ public class HologramManager {
         Location holoLoc = location.clone().add(0.5, heightOffset, 0.5);
 
         // Crear holograma
-        DebugUtil.debug("Creando holograma para " + crate.getId() + " en " + location);
         String holoId = "crate_" + crate.getId() + "_" + location.hashCode();
         Hologram hologram = DHAPI.createHologram(holoId, holoLoc, lines);
-
-        // Configurar visibilidad
-        ConfigurationSection visibility = config.getConfigurationSection("visibility");
-        if (visibility != null) {
-            // El facing ya no es necesario en versiones recientes
-            if (visibility.getBoolean("follow-player", true)) {
-                DebugUtil.debug("Configuración de follow-player activada");
-            }
-        }
-
-        // Configurar animación
-        ConfigurationSection animConfig = config.getConfigurationSection("animation");
-        if (animConfig != null && animConfig.getBoolean("enabled", true)) {
-            HologramAnimation animation = new HologramAnimation(
-                    hologram,
-                    AnimationType.valueOf(animConfig.getString("type", "WAVE").toUpperCase()),
-                    animConfig.getDouble("speed", 1.0),
-                    animConfig.getDouble("amplitude", 0.1)
-            );
-            animations.put(holoId, animation);
-            animation.start();
-        }
 
         // Guardar referencia
         holograms.put(location, holoId);

@@ -1,5 +1,6 @@
 package com.wish.essentialcrates.utils;
 
+import com.wish.essentialcrates.models.Crate;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Firework;
@@ -13,17 +14,24 @@ import java.util.List;
 public class EffectUtil {
     private static final EssentialCrates plugin = EssentialCrates.getInstance();
 
-    public static void playCrateOpenEffect(Location location) {
-        if (!plugin.getConfig().getBoolean("settings.effects.enabled", true)) return;
+    public static void playCrateOpenEffect(Location location, Crate crate) {
+        Crate.EffectsConfig effects = crate.getEffectsConfig();
 
-        // Efectos de sonido básicos
-        location.getWorld().playEffect(location, Effect.ENDER_SIGNAL, 0);
-        location.getWorld().playEffect(location, Effect.CLICK1, 0);
+        // Sonidos
+        if (effects.getSounds().isEnabled()) {
+            for (String soundConfig : effects.getSounds().getOpenSounds()) {
+                String[] parts = soundConfig.split(":");
+                if (parts.length >= 3) {
+                    location.getWorld().playSound(location, parts[0],
+                            Float.parseFloat(parts[1]),
+                            Float.parseFloat(parts[2]));
+                }
+            }
+        }
 
-        // Cargar efectos de partículas configurados
-        ConfigurationSection particleSection = plugin.getConfig().getConfigurationSection("settings.effects.particles.types.open");
-        if (particleSection != null) {
-            for (String effectConfig : particleSection.getStringList("")) {
+        // Partículas
+        if (effects.getParticles().isEnabled()) {
+            for (String effectConfig : effects.getParticles().getOpenEffects()) {
                 String[] parts = effectConfig.split(":");
                 if (parts.length >= 3) {
                     String type = parts[0];
@@ -44,30 +52,29 @@ public class EffectUtil {
         }
     }
 
-    public static void playRewardEffect(Player player, boolean rare) {
-        if (!plugin.getConfig().getBoolean("settings.effects.enabled", true)) return;
-
+    public static void playRewardEffect(Player player, Crate crate, boolean rare) {
+        Crate.EffectsConfig effects = crate.getEffectsConfig();
         Location location = player.getLocation();
 
-        // Reproducir sonidos configurados
-        List<String> sounds = plugin.getConfig().getStringList("settings.effects.sounds." +
-                (rare ? "rare-sounds" : "normal-sounds"));
-
-        for (String soundConfig : sounds) {
-            String[] parts = soundConfig.split(":");
-            if (parts.length >= 3) {
-                player.playSound(location, parts[0],
-                        Float.parseFloat(parts[1]),
-                        Float.parseFloat(parts[2]));
+        // Sonidos
+        if (effects.getSounds().isEnabled()) {
+            List<String> sounds = rare ? effects.getSounds().getRareSounds() :
+                    effects.getSounds().getNormalSounds();
+            for (String soundConfig : sounds) {
+                String[] parts = soundConfig.split(":");
+                if (parts.length >= 3) {
+                    player.playSound(location, parts[0],
+                            Float.parseFloat(parts[1]),
+                            Float.parseFloat(parts[2]));
+                }
             }
         }
 
-        // Efectos de partículas
-        ConfigurationSection particleSection = plugin.getConfig()
-                .getConfigurationSection("settings.effects.particles.types." + (rare ? "rare" : "normal"));
-
-        if (particleSection != null) {
-            for (String effectConfig : particleSection.getStringList("")) {
+        // Partículas
+        if (effects.getParticles().isEnabled()) {
+            List<String> particleEffects = rare ? effects.getParticles().getRareEffects() :
+                    effects.getParticles().getNormalEffects();
+            for (String effectConfig : particleEffects) {
                 String[] parts = effectConfig.split(":");
                 if (parts.length >= 3) {
                     String type = parts[0];
@@ -87,9 +94,9 @@ public class EffectUtil {
             }
         }
 
-        // Fuegos artificiales para recompensas raras
-        if (rare && plugin.getConfig().getBoolean("settings.effects.fireworks.enabled", true)) {
-            spawnFirework(location);
+        // Fuegos artificiales
+        if (rare && effects.getFirework().isEnabled()) {
+            spawnFirework(location, effects.getFirework());
         }
     }
 
@@ -168,31 +175,28 @@ public class EffectUtil {
         }
     }
 
-    private static void spawnFirework(Location location) {
-        ConfigurationSection fw = plugin.getConfig().getConfigurationSection("settings.effects.fireworks.rare");
-        if (fw == null) return;
-
+    private static void spawnFirework(Location location, Crate.FireworkConfig config) {
         Firework firework = location.getWorld().spawn(location, Firework.class);
         FireworkMeta meta = firework.getFireworkMeta();
 
         FireworkEffect.Builder builder = FireworkEffect.builder()
-                .with(FireworkEffect.Type.valueOf(fw.getString("type", "BALL_LARGE")));
+                .with(FireworkEffect.Type.valueOf(config.getType()));
 
         // Colores
-        for (String colorName : fw.getStringList("colors")) {
+        for (String colorName : config.getColors()) {
             builder.withColor(getColor(colorName));
         }
 
         // Colores de desvanecimiento
-        for (String colorName : fw.getStringList("fade")) {
+        for (String colorName : config.getFade()) {
             builder.withFade(getColor(colorName));
         }
 
-        if (fw.getBoolean("trail", true)) builder.withTrail();
-        if (fw.getBoolean("flicker", true)) builder.withFlicker();
+        if (config.isTrail()) builder.withTrail();
+        if (config.isFlicker()) builder.withFlicker();
 
         meta.addEffect(builder.build());
-        meta.setPower(plugin.getConfig().getInt("settings.effects.fireworks.power", 1));
+        meta.setPower(config.getPower());
         firework.setFireworkMeta(meta);
     }
 

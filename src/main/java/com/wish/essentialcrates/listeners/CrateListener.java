@@ -294,35 +294,34 @@ public class CrateListener implements Listener {
         double randomValue = random.nextDouble() * totalChance;
         final double[] currentSum = {0};
 
-        // Efecto al abrir la crate
-        EffectUtil.playCrateOpenEffect(player.getLocation());
+        // Efecto al abrir la crate con la configuración específica
+        EffectUtil.playCrateOpenEffect(player.getLocation(), crate);
 
-        // Retrasar la entrega de la recompensa para crear suspense
         new BukkitRunnable() {
             @Override
             public void run() {
                 for (Reward reward : rewards) {
                     currentSum[0] += reward.getChance();
                     if (randomValue <= currentSum[0]) {
-                        // Ejecutar comandos de recompensa
+                        // Ejecutar comandos
                         for (String command : reward.getCommands()) {
                             String finalCommand = command.replace("%player%", player.getName());
                             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand);
                         }
 
-                        // Mostrar mensaje de recompensa
+                        // Mensaje de recompensa
                         player.sendMessage(ConfigUtil.getMessage("reward-received",
                                 "%crate%", crate.getDisplayName(),
                                 "%reward%", reward.getDisplayItem().getItemMeta().getDisplayName()));
 
-                        // Efectos visuales/sonoros basados en la rareza (probabilidad < 10%)
-                        boolean isRare = reward.getChance() < 10;
-                        EffectUtil.playRewardEffect(player, isRare);
+                        // Efectos con la configuración específica de la crate
+                        boolean isRare = reward.getChance() <= crate.getHologramConfig().getRareThreshold();
+                        EffectUtil.playRewardEffect(player, crate, isRare);
 
                         break;
                     }
                 }
             }
-        }.runTaskLater(plugin, 20L); // 1 segundo de retraso
+        }.runTaskLater(plugin, 20L);
     }
 }
