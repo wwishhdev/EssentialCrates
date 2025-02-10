@@ -1,4 +1,8 @@
 settings:
+  preview:
+    show-info: true  # Mostrar/ocultar papel de información
+    show-key: true   # Mostrar/ocultar llave de ejemplo
+    size: 54        # Tamaño del inventario (múltiplo de 9, máx 54)
   effects:
     enabled: true
     rare-threshold: 10.0
@@ -135,6 +139,7 @@ crates:
         flicker: true
     rewards:
       - chance: 50
+        slot: 4  # Centro de la primera fila
         commands:
           - "give %player% diamond 64"
         display-item: "DIAMOND"
@@ -142,6 +147,7 @@ crates:
         lore:
           - "&7Probabilidad: &e50%"
       - chance: 30
+        slot: 22  # Centro del inventario
         commands:
           - "give %player% golden_apple 16"
         display-item: "GOLDEN_APPLE"

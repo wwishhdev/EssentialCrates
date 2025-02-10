@@ -132,31 +132,35 @@ public class CrateListener implements Listener {
     }
 
     private void openPreviewMenu(Player player, Crate crate) {
-        int size = (int) Math.ceil(crate.getRewards().size() / 9.0) * 9;
-        size = Math.min(54, Math.max(27, size)); // Mínimo 3 filas, máximo 6
+        // Obtener tamaño configurado
+        int configSize = plugin.getConfig().getInt("settings.preview.size", 54);
+        int size = Math.min(54, Math.max(27, (configSize / 9) * 9));
 
         Inventory inventory = Bukkit.createInventory(null, size,
                 ConfigUtil.color(crate.getDisplayName() + " &8- &7Preview"));
 
-        // Información de la crate
-        ItemStack info = new ItemStack(Material.PAPER);
-        ItemMeta infoMeta = info.getItemMeta();
-        infoMeta.setDisplayName(ConfigUtil.color("&b&lInformación"));
-        List<String> infoLore = new ArrayList<>();
-        infoLore.add(ConfigUtil.color("&7Nombre: &f" + crate.getDisplayName()));
-        infoLore.add(ConfigUtil.color("&7Recompensas: &f" + crate.getRewards().size()));
-        infoLore.add("");
-        infoLore.add(ConfigUtil.color("&7Shift + Click Derecho para preview"));
-        infoLore.add(ConfigUtil.color("&7Click Derecho con llave para abrir"));
-        infoMeta.setLore(infoLore);
-        info.setItemMeta(infoMeta);
-        inventory.setItem(size - 5, info);
+        // Información de la crate (opcional)
+        if (plugin.getConfig().getBoolean("settings.preview.show-info", true)) {
+            ItemStack info = new ItemStack(Material.PAPER);
+            ItemMeta infoMeta = info.getItemMeta();
+            infoMeta.setDisplayName(ConfigUtil.color("&b&lInformación"));
+            List<String> infoLore = new ArrayList<>();
+            infoLore.add(ConfigUtil.color("&7Nombre: &f" + crate.getDisplayName()));
+            infoLore.add(ConfigUtil.color("&7Recompensas: &f" + crate.getRewards().size()));
+            infoLore.add("");
+            infoLore.add(ConfigUtil.color("&7Shift + Click Derecho para preview"));
+            infoLore.add(ConfigUtil.color("&7Click Derecho con llave para abrir"));
+            infoMeta.setLore(infoLore);
+            info.setItemMeta(infoMeta);
+            inventory.setItem(size - 5, info);
+        }
 
-        // Mostrar la llave
-        inventory.setItem(size - 4, crate.getKeyItem());
+        // Mostrar la llave (opcional)
+        if (plugin.getConfig().getBoolean("settings.preview.show-key", true)) {
+            inventory.setItem(size - 4, crate.getKeyItem());
+        }
 
         // Agregar recompensas
-        int slot = 0;
         for (Reward reward : crate.getRewards()) {
             ItemStack display = reward.getDisplayItem().clone();
             ItemMeta meta = display.getItemMeta();
@@ -172,7 +176,13 @@ public class CrateListener implements Listener {
 
             meta.setLore(lore);
             display.setItemMeta(meta);
-            inventory.setItem(slot++, display);
+
+            // Colocar en slot específico o siguiente disponible
+            if (reward.getSlot() >= 0 && reward.getSlot() < size) {
+                inventory.setItem(reward.getSlot(), display);
+            } else {
+                inventory.addItem(display);
+            }
         }
 
         // Rellenar espacios vacíos

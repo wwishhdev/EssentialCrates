@@ -203,6 +203,15 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        if (args.length >= 4) {
+            try {
+                int slot = Integer.parseInt(args[3]);
+                if (slot >= 0 && slot < plugin.getConfig().getInt("settings.preview.size", 54)) {
+                    config.set(path + ".slot", slot);
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
         // Agregar comandos basados en el item
         List<String> commands = new ArrayList<>();
         commands.add("give %player% " + item.getType().name().toLowerCase() + " " + item.getAmount());

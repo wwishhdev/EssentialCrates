@@ -15,10 +15,12 @@ public class Reward {
     private final double chance;
     private final List<String> commands;
     private final ItemStack displayItem;
+    private final int slot;
 
     public Reward(ConfigurationSection section) {
         this.chance = section.getDouble("chance");
         this.commands = section.getStringList("commands");
+        this.slot = section.getInt("slot", -1);
 
         // Configurar el item de display
         Material material = Material.valueOf(section.getString("display-item", "STONE"));
