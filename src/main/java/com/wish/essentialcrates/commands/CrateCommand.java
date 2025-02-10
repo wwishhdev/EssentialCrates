@@ -17,6 +17,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,6 +54,9 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
             case "keyall":
                 handleKeyAll(sender, args);
                 break;
+            case "additem":
+                handleAddItem(sender, args);
+                break;
             case "debug":
                 if (!sender.hasPermission("essentialcrates.admin")) {
                     sender.sendMessage(ConfigUtil.getMessage("no-permission"));
@@ -84,6 +88,7 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ConfigUtil.color("&b/crate create <nombre> &7- &fCrea una crate"));
         sender.sendMessage(ConfigUtil.color("&b/crate delete <nombre> &7- &fElimina una crate"));
         sender.sendMessage(ConfigUtil.color("&b/crate keyall <crate> [cantidad] &7- &fDa llaves a todos"));
+        sender.sendMessage(ConfigUtil.color("&b/crate additem <crate> <probabilidad> &7- &fAgrega el item en mano"));
         sender.sendMessage(ConfigUtil.color("&b/crate reload &7- &fRecarga la configuración"));
         sender.sendMessage(ConfigUtil.color("&8&m---------------------"));
     }
@@ -129,6 +134,90 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         } else {
             sender.sendMessage(ConfigUtil.getMessage("invalid-crate"));
         }
+    }
+
+    private void handleAddItem(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("essentialcrates.additem")) {
+            sender.sendMessage(ConfigUtil.getMessage("no-permission"));
+            return;
+        }
+
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ConfigUtil.color("&cEste comando solo puede ser usado por jugadores."));
+            return;
+        }
+
+        if (args.length < 3) {
+            sender.sendMessage(ConfigUtil.color("&cUso: /crate additem <crate> <probabilidad>"));
+            return;
+        }
+
+        Player player = (Player) sender;
+        ItemStack item = player.getItemInHand();
+
+        if (item == null || item.getType() == Material.AIR) {
+            sender.sendMessage(ConfigUtil.color("&cDebes tener un item en la mano!"));
+            return;
+        }
+
+        String crateId = args[1].toLowerCase();
+        Optional<Crate> crateOptional = plugin.getCrateManager().getCrate(crateId);
+
+        if (!crateOptional.isPresent()) {
+            sender.sendMessage(ConfigUtil.getMessage("invalid-crate"));
+            return;
+        }
+
+        double chance;
+        try {
+            chance = Double.parseDouble(args[2]);
+            if (chance <= 0 || chance > 100) {
+                sender.sendMessage(ConfigUtil.color("&cLa probabilidad debe estar entre 0 y 100!"));
+                return;
+            }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(ConfigUtil.color("&cLa probabilidad debe ser un número válido!"));
+            return;
+        }
+
+        // Guardar el item en la configuración
+        FileConfiguration config = plugin.getConfig();
+        String path = "crates." + crateId + ".rewards";
+
+        int newIndex = 0;
+        if (config.contains(path)) {
+            newIndex = config.getConfigurationSection(path).getKeys(false).size();
+        }
+
+        path = path + "." + newIndex;
+        config.set(path + ".chance", chance);
+        config.set(path + ".display-item", item.getType().name());
+
+        if (item.hasItemMeta()) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta.hasDisplayName()) {
+                config.set(path + ".display-name", meta.getDisplayName());
+            }
+            if (meta.hasLore()) {
+                config.set(path + ".lore", meta.getLore());
+            }
+        }
+
+        // Agregar comandos basados en el item
+        List<String> commands = new ArrayList<>();
+        commands.add("give %player% " + item.getType().name().toLowerCase() + " " + item.getAmount());
+        config.set(path + ".commands", commands);
+
+        // Guardar y recargar
+        plugin.saveConfig();
+        plugin.getCrateManager().loadCrates();
+        plugin.getHologramManager().reloadAllHolograms();
+
+        sender.sendMessage(ConfigUtil.color("&aItem agregado exitosamente a la crate &e" + crateId +
+                " &acon probabilidad &e" + chance + "%"));
+
+        DebugUtil.debug("Nuevo item agregado a " + crateId + " por " + player.getName() +
+                " - Tipo: " + item.getType() + ", Probabilidad: " + chance + "%");
     }
 
     private void handleKeyAll(CommandSender sender, String[] args) {
@@ -390,10 +479,12 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             if (sender.hasPermission("essentialcrates.admin")) {
-                completions.addAll(Arrays.asList("help", "give", "create", "delete", "reload", "keyall"));
+                completions.addAll(Arrays.asList("help", "give", "create", "delete", "reload", "keyall", "additem"));
             }
         } else if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("keyall")) {
+            if (args[0].equalsIgnoreCase("give") ||
+                    args[0].equalsIgnoreCase("keyall") ||
+                    args[0].equalsIgnoreCase("additem")) {
                 completions.addAll(plugin.getCrateManager().getCrates().keySet());
             }
         } else if (args.length == 3) {

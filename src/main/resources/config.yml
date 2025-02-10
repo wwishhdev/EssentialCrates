@@ -70,6 +70,7 @@ messages:
   config-reloaded: "&aConfiguración recargada exitosamente."
   invalid-crate: "&cEsa crate no existe."
   invalid-amount: "&cLa cantidad debe ser un número positivo."
+  item-added: "&aItem agregado exitosamente a la crate &e%crate% &acon probabilidad &e%chance%%"
   player-not-found: "&cJugador no encontrado."
   no-key: "&cNecesitas una llave válida para abrir esta crate!"
   reward-received: "&aHas recibido &e%reward% &ade &b%crate%&a!"

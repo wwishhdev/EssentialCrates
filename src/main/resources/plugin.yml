@@ -30,3 +30,6 @@ permissions:
   essentialcrates.keyall:
     description: Dar llaves a todos los jugadores
     default: op
+  essentialcrates.additem:
+    description: Agregar items a las crates
+    default: op
