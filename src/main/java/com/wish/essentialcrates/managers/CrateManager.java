@@ -135,12 +135,18 @@ public class CrateManager {
 
     public void saveCrateLocation(Location location, String crateId) {
         long startTime = System.nanoTime();
+
+        // Guardar en el mapa de ubicaciones
         crateLocations.put(location, crateId);
         plugin.getCacheManager().cacheLocation(location, crateId);
 
-        // Crear holograma
-        getCrate(crateId).ifPresent(crate ->
-                plugin.getHologramManager().createHologram(location, crate));
+        // Crear holograma inmediatamente
+        getCrate(crateId).ifPresent(crate -> {
+            if (plugin.getHologramManager().isEnabled()) {
+                plugin.getHologramManager().createHologram(location, crate);
+                DebugUtil.debug("Holograma creado para " + crateId + " en " + location);
+            }
+        });
 
         // Guardar en almacenamiento
         if (plugin.getConfig().getString("settings.storage.type", "YAML").equalsIgnoreCase("MYSQL")) {
@@ -148,7 +154,8 @@ public class CrateManager {
         } else {
             saveCrateLocationYAML(location, crateId);
         }
-        DebugUtil.debug("Guardada ubicación de crate " + crateId + " en " + location);
+
+        DebugUtil.debug("Ubicación de crate guardada: " + crateId + " en " + location);
         DebugUtil.performance("Guardado de ubicación de crate", startTime);
     }
 

@@ -182,13 +182,19 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         plugin.saveConfig();
 
         // Registrar la ubicación de la crate
-        plugin.getCrateManager().saveCrateLocation(targetBlock.getLocation(), crateId);
+        Location crateLocation = targetBlock.getLocation();
+        plugin.getCrateManager().saveCrateLocation(crateLocation, crateId);
 
-        // Recargar la crate
+        // Recargar la crate y crear el holograma
         plugin.reloadConfig();
         plugin.getCrateManager().loadCrates();
 
+        // Crear el holograma inmediatamente
+        plugin.getCrateManager().getCrate(crateId).ifPresent(crate ->
+                plugin.getHologramManager().createHologram(crateLocation, crate));
+
         sender.sendMessage(ConfigUtil.getMessage("crate-created"));
+        DebugUtil.debug("Crate creada: " + crateId + " en " + crateLocation);
     }
 
     private void handleDelete(CommandSender sender, String[] args) {
