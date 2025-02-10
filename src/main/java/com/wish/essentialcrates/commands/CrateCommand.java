@@ -50,6 +50,9 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
             case "delete":
                 handleDelete(sender, args);
                 break;
+            case "keyall":
+                handleKeyAll(sender, args);
+                break;
             case "debug":
                 if (!sender.hasPermission("essentialcrates.admin")) {
                     sender.sendMessage(ConfigUtil.getMessage("no-permission"));
@@ -80,6 +83,7 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ConfigUtil.color("&b/crate give <jugador> <crate> [cantidad] &7- &fDa llaves"));
         sender.sendMessage(ConfigUtil.color("&b/crate create <nombre> &7- &fCrea una crate"));
         sender.sendMessage(ConfigUtil.color("&b/crate delete <nombre> &7- &fElimina una crate"));
+        sender.sendMessage(ConfigUtil.color("&b/crate keyall <crate> [cantidad] &7- &fDa llaves a todos"));
         sender.sendMessage(ConfigUtil.color("&b/crate reload &7- &fRecarga la configuración"));
         sender.sendMessage(ConfigUtil.color("&8&m---------------------"));
     }
@@ -125,6 +129,49 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         } else {
             sender.sendMessage(ConfigUtil.getMessage("invalid-crate"));
         }
+    }
+
+    private void handleKeyAll(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("essentialcrates.keyall")) {
+            sender.sendMessage(ConfigUtil.getMessage("no-permission"));
+            return;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage(ConfigUtil.color("&cUso: /crate keyall <crate> [cantidad]"));
+            return;
+        }
+
+        Optional<Crate> crateOptional = plugin.getCrateManager().getCrate(args[1]);
+        if (!crateOptional.isPresent()) {
+            sender.sendMessage(ConfigUtil.getMessage("invalid-crate"));
+            return;
+        }
+
+        Crate crate = crateOptional.get();
+        int amount = args.length > 2 ? Integer.parseInt(args[2]) : 1;
+
+        if (amount <= 0) {
+            sender.sendMessage(ConfigUtil.getMessage("invalid-amount"));
+            return;
+        }
+
+        int playerCount = 0;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            ItemStack keyItem = crate.getKeyItem().clone();
+            keyItem.setAmount(amount);
+            player.getInventory().addItem(keyItem);
+            player.sendMessage(ConfigUtil.getMessage("received-key",
+                    "%amount%", amount,
+                    "%crate%", crate.getDisplayName()));
+            playerCount++;
+        }
+
+        sender.sendMessage(ConfigUtil.color("&aHas dado &e" + amount + " &allave(s) de " +
+                crate.getDisplayName() + " &aa &e" + playerCount + " &ajugadores."));
+
+        DebugUtil.debug("Llaves distribuidas a " + playerCount + " jugadores - Crate: " +
+                crate.getId() + ", Cantidad: " + amount);
     }
 
     private void handleCreate(CommandSender sender, String[] args) {
@@ -343,13 +390,11 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             if (sender.hasPermission("essentialcrates.admin")) {
-                completions.addAll(Arrays.asList("help", "give", "create", "delete", "reload"));
+                completions.addAll(Arrays.asList("help", "give", "create", "delete", "reload", "keyall"));
             }
         } else if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("give")) {
-                completions.addAll(Bukkit.getOnlinePlayers().stream()
-                        .map(Player::getName)
-                        .collect(Collectors.toList()));
+            if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("keyall")) {
+                completions.addAll(plugin.getCrateManager().getCrates().keySet());
             }
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("give")) {

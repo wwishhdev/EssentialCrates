@@ -27,3 +27,6 @@ permissions:
   essentialcrates.debug:
     description: Permite usar el modo debug
     default: op
+  essentialcrates.keyall:
+    description: Dar llaves a todos los jugadores
+    default: op
