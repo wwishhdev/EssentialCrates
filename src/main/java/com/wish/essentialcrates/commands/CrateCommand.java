@@ -211,40 +211,62 @@ public class CrateCommand implements CommandExecutor, TabCompleter {
         String crateId = args[1].toLowerCase();
 
         // Verificar si la crate existe
-        if (!plugin.getCrateManager().getCrate(crateId).isPresent()) {
+        Optional<Crate> crateOptional = plugin.getCrateManager().getCrate(crateId);
+        if (!crateOptional.isPresent()) {
             sender.sendMessage(ConfigUtil.getMessage("invalid-crate"));
             return;
+        }
+
+        // Eliminar hologramas primero
+        Map<Location, String> locations = new HashMap<>(plugin.getCrateManager().getCrateLocations());
+        for (Map.Entry<Location, String> entry : locations.entrySet()) {
+            if (entry.getValue().equals(crateId)) {
+                // Remover holograma
+                plugin.getHologramManager().removeHologram(entry.getKey());
+
+                // Remover del caché
+                plugin.getCacheManager().invalidateLocation(entry.getKey());
+
+                // Remover de la base de datos
+                if (plugin.getConfig().getString("settings.storage.type", "YAML").equalsIgnoreCase("MYSQL")) {
+                    deleteCrateLocationMySQL(entry.getKey());
+                } else {
+                    deleteCrateLocationYAML(entry.getKey());
+                }
+
+                // Remover del mapa de ubicaciones
+                plugin.getCrateManager().getCrateLocations().remove(entry.getKey());
+
+                // Convertir el cofre en un cofre normal
+                entry.getKey().getBlock().setType(Material.AIR);
+                entry.getKey().getBlock().setType(Material.CHEST);
+            }
         }
 
         // Eliminar la crate de la configuración
         plugin.getConfig().set("crates." + crateId, null);
         plugin.saveConfig();
 
-        // Eliminar las ubicaciones de la crate
-        Map<Location, String> locations = new HashMap<>(plugin.getCrateManager().getCrateLocations());
-        for (Map.Entry<Location, String> entry : locations.entrySet()) {
-            if (entry.getValue().equals(crateId)) {
-                if (plugin.getConfig().getString("settings.storage.type", "YAML").equalsIgnoreCase("MYSQL")) {
-                    deleteCrateLocationMySQL(entry.getKey());
-                } else {
-                    String key = String.format("%s,%d,%d,%d",
-                            entry.getKey().getWorld().getName(),
-                            entry.getKey().getBlockX(),
-                            entry.getKey().getBlockY(),
-                            entry.getKey().getBlockZ()
-                    );
-                    plugin.getDataManager().getDataConfig().set("locations." + key, null);
-                    plugin.getDataManager().saveData();
-                }
-                plugin.getCrateManager().getCrateLocations().remove(entry.getKey());
-            }
-        }
+        // Invalidar caché de la crate
+        plugin.getCacheManager().invalidateCrate(crateId);
 
-        // Recargar la configuración
+        // Recargar configuración
         plugin.reloadConfig();
         plugin.getCrateManager().loadCrates();
 
         sender.sendMessage(ConfigUtil.getMessage("crate-deleted"));
+        DebugUtil.debug("Crate eliminada: " + crateId);
+    }
+
+    private void deleteCrateLocationYAML(Location location) {
+        String key = String.format("%s,%d,%d,%d",
+                location.getWorld().getName(),
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ()
+        );
+        plugin.getDataManager().getDataConfig().set("locations." + key, null);
+        plugin.getDataManager().saveData();
     }
 
     // Método auxiliar para eliminar ubicaciones de MySQL
