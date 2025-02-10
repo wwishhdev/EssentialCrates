@@ -40,32 +40,6 @@ settings:
     enabled: true
     height: 2.5
     update-interval: 300
-    style:
-      title:
-        text: "&b&l%crate%"
-        offset: 0.0
-      rewards:
-        enabled: true
-        header: "&7Recompensas disponibles:"
-        format: "&f- &e%reward% &7(%chance%%)"
-        max-shown: 3
-        rare-format: "&f- &6&l%reward% &7(%chance%%)" # Para recompensas raras
-        rare-threshold: 10.0 # Porcentaje bajo el cual se considera rara
-        offset: 0.3
-      footer:
-        enabled: true
-        lines:
-          - ""
-          - "&eClick derecho con llave"
-          - "&7Shift + Click para preview"
-        offset: 0.3
-      animation:
-        enabled: true
-        type: "WAVE" # WAVE, BOUNCE, ROTATE
-        speed: 1.0
-        amplitude: 0.1
-      visibility:
-        follow-player: true # El holograma rota para mirar al jugador
   cache:
     enabled: true
     cleanup-interval: 300 # En segundos (5 minutos)
@@ -109,6 +83,55 @@ crates:
     key-lore:
       - "&7Click derecho en la crate"
       - "&7para obtener recompensas!"
+    hologram:
+      title:
+        text: "&b&l%crate%"
+        offset: 0.0
+      rewards:
+        enabled: true
+        header: "&7Recompensas disponibles:"
+        format: "&f- &e%reward% &7(%chance%%)"
+        max-shown: 3
+        rare-format: "&f- &6&l%reward% &7(%chance%%)"
+        rare-threshold: 10.0
+        offset: 0.3
+      footer:
+        enabled: true
+        lines:
+          - ""
+          - "&eClick derecho con llave"
+          - "&7Shift + Click para preview"
+        offset: 0.3
+    effects:
+      sounds:
+        enabled: true
+        open:
+          - "LEVEL_UP:1.0:1.0"
+        rare:
+          - "ENDERDRAGON_GROWL:0.5:1.0"
+          - "LEVEL_UP:1.0:2.0"
+        normal:
+          - "ORB_PICKUP:1.0:1.0"
+      particles:
+        enabled: true
+        amount: 20
+        open:
+          - "SPIRAL:WITCH_MAGIC:1.5:2.0"
+        rare:
+          - "CIRCLE:FLAME:1.5:2"
+        normal:
+          - "CIRCLE:HAPPY_VILLAGER:1.5:2"
+      firework:
+        enabled: true
+        power: 1
+        type: "BALL_LARGE"
+        colors:
+          - "AQUA"
+          - "PURPLE"
+        fade:
+          - "WHITE"
+        trail: true
+        flicker: true
     rewards:
       - chance: 50
         commands:
